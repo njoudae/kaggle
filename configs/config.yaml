@@ -1,0 +1,112 @@
+seed: 42
+
+paths:
+  data_dir: ${STANCEEVAL_DATA_DIR:-.}
+  output_dir: ${STANCEEVAL_OUTPUT_DIR:-outputs}
+  results_dir: ${STANCEEVAL_RESULTS_DIR:-results}
+  best_model_dir: ${STANCEEVAL_BEST_MODEL_DIR:-outputs/best_model}
+  train_file: MawqifV2/Track 1/train.csv
+  dev_file: MawqifV2/Track 1/dev.csv
+  test_seen_file: test_seen.csv
+  test_unseen_file: test_unseen.csv
+  fallback_test_seen_file: MawqifV2/Track 1/dev.csv
+  fallback_test_unseen_file: MawqifV2/Track 2/dev_track_2.csv
+
+columns:
+  id: id
+  id_aliases: [id, ID]
+  target: target
+  text: text
+  stance: stance
+
+labels:
+  Against: 0
+  Favor: 1
+  None: 2
+
+model_selection_metric: dev_Favg2
+
+models:
+  - name: AraBERTv02_Twitter
+    hf_id: aubmindlab/bert-base-arabertv02-twitter
+    enabled: true
+
+training:
+  max_length: 128
+  batch_size: 32
+  eval_batch_size: 32
+  epochs: 20
+  learning_rate: 0.00002
+  weight_decay: 0.01
+  adam_epsilon: 0.00000001
+  gradient_clip_norm: 1.0
+  gradient_accumulation_steps: 1
+  num_workers: 2
+  pin_memory: true
+  mixed_precision: auto
+  early_stopping:
+    enabled: true
+    patience: 3
+  save_best_only: true
+  resume_from_checkpoint: false
+  max_train_samples: null
+  max_dev_samples: null
+
+experiments:
+  base_final_cls_full_ft:
+    enabled: true
+    architecture: sequence_classification
+    freeze_encoder: false
+  cls4_equal_loss_full_ft:
+    enabled: false
+    architecture: cls4
+    fusion: equal_logits
+    loss_mode: equal_mean
+    freeze_encoder: false
+  cls4_equal_loss_frozen:
+    enabled: false
+    architecture: cls4
+    fusion: equal_logits
+    loss_mode: equal_mean
+    freeze_encoder: true
+  cls4_weighted_logits_full_ft:
+    enabled: false
+    architecture: cls4
+    fusion: weighted_logits
+    loss_mode: heads_plus_fused
+    lambda_fused: 1.0
+    freeze_encoder: false
+  cls4_weighted_logits_frozen:
+    enabled: false
+    architecture: cls4
+    fusion: weighted_logits
+    loss_mode: heads_plus_fused
+    lambda_fused: 1.0
+    freeze_encoder: true
+  cls4_learnable_loss_full_ft:
+    enabled: false
+    architecture: cls4
+    fusion: equal_logits
+    loss_mode: learnable_loss
+    beta_entropy: 0.0
+    freeze_encoder: false
+  cls4_learnable_loss_frozen:
+    enabled: false
+    architecture: cls4
+    fusion: equal_logits
+    loss_mode: learnable_loss
+    beta_entropy: 0.0
+    freeze_encoder: true
+  cls4_equal_loss_gradual_unfreeze:
+    enabled: false
+    architecture: cls4
+    fusion: equal_logits
+    loss_mode: equal_mean
+    freeze_encoder: true
+    unfreeze_last_n_layers: 2
+
+submissions:
+  seen_name: submission_seen.csv
+  unseen_name: submission_unseen.csv
+  zip_name: submission_files.zip
+  create_zip: true
