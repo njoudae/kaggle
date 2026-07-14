@@ -27,8 +27,20 @@ src/trainer.py
 src/inference.py
 src/utils.py
 scripts/run_cls4_experiments.py
+scripts/run_layerwise_cls_analysis.py
+scripts/run_selected_layers_experiment.py
+scripts/final_analysis.py
 scripts/generate_submissions.py
 scripts/smoke_test.py
+notebooks/00_environment_check.ipynb
+notebooks/01_base_model_comparison.ipynb
+notebooks/02_layerwise_cls_analysis.ipynb
+notebooks/03_cls4_equal_loss.ipynb
+notebooks/04_cls4_frozen_encoder.ipynb
+notebooks/05_weighted_logit_fusion.ipynb
+notebooks/06_learnable_loss_weights.ipynb
+notebooks/07_submission_generation.ipynb
+notebooks/08_final_analysis.ipynb
 kaggle_run.ipynb
 ```
 
@@ -103,6 +115,20 @@ early_stopping:
 
 The best checkpoint is selected only by dev `Favg2` and copied to `outputs/best_model/`.
 
+The research notebooks are reproducible runners only. They call scripts and keep implementation in `src/`:
+
+| Notebook | Purpose |
+| --- | --- |
+| `00_environment_check.ipynb` | GPU/data/model smoke test; prints `PIPELINE VERIFIED` |
+| `01_base_model_comparison.ipynb` | Compares AraBERTv02 Twitter, MARBERTv2, MARBERT, ARBERT |
+| `02_layerwise_cls_analysis.ipynb` | Trains one CLS head per encoder layer and selects top 4 layers |
+| `03_cls4_equal_loss.ipynb` | CLS4 with selected layers, mean head loss, mean logits |
+| `04_cls4_frozen_encoder.ipynb` | CLS4 selected layers with frozen encoder |
+| `05_weighted_logit_fusion.ipynb` | CLS4 selected layers with learned logit fusion |
+| `06_learnable_loss_weights.ipynb` | CLS4 selected layers with learned loss weights |
+| `07_submission_generation.ipynb` | Selects best experiment and writes submissions |
+| `08_final_analysis.ipynb` | Collects CSVs and plots final analysis |
+
 ## Local Run
 
 Install dependencies:
@@ -122,6 +148,12 @@ Run the full workflow:
 ```bash
 python scripts/smoke_test.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
 python scripts/compare_base_models.py --config configs/config.yaml --verbose
+python scripts/run_layerwise_cls_analysis.py --config configs/config.yaml --verbose
+python scripts/run_selected_layers_experiment.py --config configs/config.yaml --experiment cls4_equal_loss --verbose
+python scripts/run_selected_layers_experiment.py --config configs/config.yaml --experiment cls4_frozen --verbose
+python scripts/run_selected_layers_experiment.py --config configs/config.yaml --experiment weighted_logits --verbose
+python scripts/run_selected_layers_experiment.py --config configs/config.yaml --experiment learnable_loss --verbose
+python scripts/final_analysis.py --config configs/config.yaml --verbose
 python scripts/generate_submissions.py --config configs/config.yaml --verbose
 ```
 
@@ -136,6 +168,12 @@ export STANCEEVAL_OUTPUT_DIR=/kaggle/working/outputs
 export STANCEEVAL_RESULTS_DIR=/kaggle/working/results
 python scripts/smoke_test.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
 python scripts/compare_base_models.py --config configs/config.yaml --verbose
+python scripts/run_layerwise_cls_analysis.py --config configs/config.yaml --verbose
+python scripts/run_selected_layers_experiment.py --config configs/config.yaml --experiment cls4_equal_loss --verbose
+python scripts/run_selected_layers_experiment.py --config configs/config.yaml --experiment cls4_frozen --verbose
+python scripts/run_selected_layers_experiment.py --config configs/config.yaml --experiment weighted_logits --verbose
+python scripts/run_selected_layers_experiment.py --config configs/config.yaml --experiment learnable_loss --verbose
+python scripts/final_analysis.py --config configs/config.yaml --verbose
 python scripts/generate_submissions.py --config configs/config.yaml --verbose
 ```
 
@@ -145,6 +183,15 @@ Base model comparison result:
 
 ```text
 results/base_model_comparison.csv
+results/layerwise_results.csv
+results/layer_ranking.csv
+results/selected_layers.json
+results/cls4_equal_loss_results.csv
+results/cls4_frozen_results.csv
+results/weighted_logits_results.csv
+results/learnable_loss_results.csv
+results/comparison.csv
+results/final_analysis/
 ```
 
 Best final checkpoint:

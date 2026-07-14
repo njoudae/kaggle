@@ -13,7 +13,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.config import load_config
 from src.data import StanceDataset, columns_from_config, labels_from_config, load_labeled_dataframe
-from src.pipeline_logging import PipelineLogger, print_gpu_diagnostics, print_model_device_and_memory
+from src.pipeline_logging import (
+    PipelineLogger,
+    print_gpu_diagnostics,
+    print_model_device_and_memory,
+    print_parameter_counts,
+)
 from src.utils import ensure_dir, get_device, set_seed
 from src.validation import (
     describe_model_cache,
@@ -99,6 +104,7 @@ def main() -> None:
         with logger.stage("Moving model to GPU", "GPU"):
             model.to(device)
             print_model_device_and_memory(model)
+            print_parameter_counts(model)
 
         with logger.stage("Tokenizing samples", "Tokenization"):
             dataset = StanceDataset(df, tokenizer, columns, max_length=int(config["training"]["max_length"]), labeled=True)

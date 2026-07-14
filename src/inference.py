@@ -19,7 +19,7 @@ def load_trained_model(checkpoint_dir: str | Path, device: torch.device) -> tupl
     source = Path(checkpoint_dir)
     metadata = json_load(source / "custom_model_metadata.json")
     tokenizer = AutoTokenizer.from_pretrained(source)
-    if metadata.get("model_type") == "cls4":
+    if metadata.get("model_type") in {"cls4", "layerwise_cls"}:
         label2id = {key: int(value) for key, value in metadata["label2id"].items()}
         id2label = {int(key): value for key, value in metadata["id2label"].items()}
         model = build_model(metadata["base_model_id"], label2id, id2label, metadata["experiment_config"])

@@ -13,8 +13,8 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, get_
 
 from .data import ColumnConfig, StanceDataset
 from .metrics import compute_metrics, per_target_metrics, prefixed_metrics, save_reports
-from .models import CLS4Classifier, build_model, save_custom_model
-from .pipeline_logging import PipelineLogger, print_epoch_gpu_memory, print_gpu_diagnostics, print_model_device_and_memory
+from .models import CLS4Classifier, LayerwiseCLSClassifier, build_model, save_custom_model
+from .pipeline_logging import PipelineLogger, print_epoch_gpu_memory, print_gpu_diagnostics, print_model_device_and_memory, print_parameter_counts
 from .utils import cleanup_cuda, ensure_dir, json_dump, remove_dir, select_amp_dtype
 from .validation import describe_model_cache, validate_labeled_dataset
 
@@ -67,7 +67,7 @@ def _save_checkpoint(
 ) -> None:
     remove_dir(checkpoint_dir)
     ensure_dir(checkpoint_dir)
-    if isinstance(model, CLS4Classifier):
+    if isinstance(model, (CLS4Classifier, LayerwiseCLSClassifier)):
         save_custom_model(model, checkpoint_dir, metadata)
     else:
         model.save_pretrained(checkpoint_dir)
@@ -83,7 +83,7 @@ def _verify_checkpoint(
     sample_batch: dict[str, torch.Tensor],
     device: torch.device,
 ) -> None:
-    if metadata["model_type"] == "cls4":
+    if metadata["model_type"] in {"cls4", "layerwise_cls"}:
         label2id = {str(key): int(value) for key, value in metadata["label2id"].items()}
         id2label = {int(key): str(value) for key, value in metadata["id2label"].items()}
         model = build_model(metadata["base_model_id"], label2id, id2label, metadata["experiment_config"])
@@ -154,6 +154,7 @@ def train_experiment(
     with logger.stage("Moving model to GPU", "GPU"):
         model.to(device)
         print_model_device_and_memory(model)
+        print_parameter_counts(model)
 
     with logger.stage("Building dataloaders", "Dataset"):
         train_ds = StanceDataset(train_df, tokenizer, columns, max_length=max_length, labeled=True)
@@ -196,7 +197,7 @@ def train_experiment(
     state_path = run_dir / "last_training_state.pt"
 
     metadata = {
-        "model_type": "cls4" if experiment_config.get("architecture") == "cls4" else "sequence_classification",
+        "model_type": experiment_config.get("architecture", "sequence_classification"),
         "base_model_id": model_id,
         "model_name": model_name,
         "experiment_name": experiment_name,

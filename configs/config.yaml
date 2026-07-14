@@ -44,7 +44,7 @@ models:
 
 training:
   max_length: 128
-  batch_size: 16
+  batch_size: 32
   eval_batch_size: 32
   epochs: 20
   learning_rate: 0.00002
@@ -55,8 +55,9 @@ training:
   num_workers: 2
   pin_memory: true
   mixed_precision: auto
+  require_gpu: true
   early_stopping:
-    enabled: false
+    enabled: true
     patience: 3
   save_best_only: true
   resume_from_checkpoint: false

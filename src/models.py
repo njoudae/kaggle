@@ -47,10 +47,18 @@ class CLS4Classifier(nn.Module):
         beta_entropy: float = 0.0,
         freeze_encoder: bool = False,
         unfreeze_last_n_layers: int = 0,
+        selected_layers: list[int] | None = None,
     ) -> None:
         super().__init__()
         self.config = AutoConfig.from_pretrained(model_id, output_hidden_states=True)
         self.encoder = AutoModel.from_pretrained(model_id, config=self.config)
+        num_hidden_layers = int(getattr(self.config, "num_hidden_layers", 12))
+        self.selected_layers = selected_layers or [num_hidden_layers - 3, num_hidden_layers - 2, num_hidden_layers - 1, num_hidden_layers]
+        if len(self.selected_layers) != 4:
+            raise ValueError(f"CLS4 requires exactly four selected layers, got {self.selected_layers}")
+        invalid = [layer for layer in self.selected_layers if layer < 1 or layer > num_hidden_layers]
+        if invalid:
+            raise ValueError(f"Selected layers out of range 1..{num_hidden_layers}: {invalid}")
         hidden_size = int(self.config.hidden_size)
         dropout_prob = float(dropout if dropout is not None else getattr(self.config, "hidden_dropout_prob", 0.1))
         self.dropout = nn.Dropout(dropout_prob)
@@ -93,10 +101,10 @@ class CLS4Classifier(nn.Module):
     def forward(self, labels: torch.Tensor | None = None, **batch: torch.Tensor) -> ModelOutput:
         outputs = self.encoder(**batch, output_hidden_states=True, return_dict=True)
         hidden_states = outputs.hidden_states
-        if hidden_states is None or len(hidden_states) < 4:
-            raise RuntimeError("The encoder did not return at least four hidden states.")
+        if hidden_states is None:
+            raise RuntimeError("The encoder did not return hidden states.")
 
-        cls_layers = [hidden_states[-4][:, 0, :], hidden_states[-3][:, 0, :], hidden_states[-2][:, 0, :], hidden_states[-1][:, 0, :]]
+        cls_layers = [hidden_states[layer][:, 0, :] for layer in self.selected_layers]
         head_logits = [head(self.dropout(cls_value)) for head, cls_value in zip(self.heads, cls_layers)]
         final_logits, alpha = self.aggregate_logits(head_logits)
 
@@ -124,6 +132,41 @@ class CLS4Classifier(nn.Module):
         )
 
 
+class LayerwiseCLSClassifier(nn.Module):
+    def __init__(
+        self,
+        model_id: str,
+        layer_index: int,
+        num_labels: int = 3,
+        dropout: float | None = None,
+        freeze_encoder: bool = False,
+    ) -> None:
+        super().__init__()
+        self.config = AutoConfig.from_pretrained(model_id, output_hidden_states=True)
+        self.encoder = AutoModel.from_pretrained(model_id, config=self.config)
+        num_hidden_layers = int(getattr(self.config, "num_hidden_layers", 12))
+        if layer_index < 1 or layer_index > num_hidden_layers:
+            raise ValueError(f"Layer index must be in 1..{num_hidden_layers}, got {layer_index}")
+        self.layer_index = int(layer_index)
+        hidden_size = int(self.config.hidden_size)
+        dropout_prob = float(dropout if dropout is not None else getattr(self.config, "hidden_dropout_prob", 0.1))
+        self.dropout = nn.Dropout(dropout_prob)
+        self.classifier = nn.Linear(hidden_size, num_labels)
+        if freeze_encoder:
+            for parameter in self.encoder.parameters():
+                parameter.requires_grad = False
+
+    def forward(self, labels: torch.Tensor | None = None, **batch: torch.Tensor) -> ModelOutput:
+        outputs = self.encoder(**batch, output_hidden_states=True, return_dict=True)
+        hidden_states = outputs.hidden_states
+        if hidden_states is None:
+            raise RuntimeError("The encoder did not return hidden states.")
+        cls_value = hidden_states[self.layer_index][:, 0, :]
+        logits = self.classifier(self.dropout(cls_value))
+        loss = F.cross_entropy(logits, labels) if labels is not None else None
+        return ModelOutput(loss=loss, logits=logits)
+
+
 def build_model(
     model_id: str,
     label2id: dict[str, int],
@@ -133,6 +176,13 @@ def build_model(
     architecture = experiment.get("architecture", "sequence_classification")
     if architecture == "sequence_classification":
         return build_sequence_classifier(model_id, label2id, id2label)
+    if architecture == "layerwise_cls":
+        return LayerwiseCLSClassifier(
+            model_id=model_id,
+            layer_index=int(experiment["layer_index"]),
+            num_labels=len(label2id),
+            freeze_encoder=bool(experiment.get("freeze_encoder", False)),
+        )
     if architecture != "cls4":
         raise ValueError(f"Unsupported architecture: {architecture}")
     return CLS4Classifier(
@@ -144,10 +194,11 @@ def build_model(
         beta_entropy=float(experiment.get("beta_entropy", 0.0)),
         freeze_encoder=bool(experiment.get("freeze_encoder", False)),
         unfreeze_last_n_layers=int(experiment.get("unfreeze_last_n_layers", 0) or 0),
+        selected_layers=[int(layer) for layer in experiment.get("selected_layers", [])] or None,
     )
 
 
-def save_custom_model(model: CLS4Classifier, path: str | Path, metadata: dict[str, Any]) -> None:
+def save_custom_model(model: nn.Module, path: str | Path, metadata: dict[str, Any]) -> None:
     target = Path(path)
     target.mkdir(parents=True, exist_ok=True)
     torch.save(model.state_dict(), target / "pytorch_model.bin")

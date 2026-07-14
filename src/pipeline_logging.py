@@ -64,6 +64,7 @@ class PipelineLogger:
 def gpu_diagnostics() -> dict[str, str | int | bool]:
     data: dict[str, str | int | bool] = {
         "cuda_available": torch.cuda.is_available(),
+        "cuda_version": torch.version.cuda or "unavailable",
         "pytorch_version": torch.__version__,
     }
     if torch.cuda.is_available():
@@ -90,6 +91,7 @@ def print_gpu_diagnostics() -> None:
 
     data = gpu_diagnostics()
     print("CUDA available:", data["cuda_available"])
+    print("CUDA version:", data["cuda_version"])
     print("PyTorch version:", data["pytorch_version"])
     print("Transformers version:", transformers_version)
     if data["cuda_available"]:
@@ -111,6 +113,15 @@ def print_model_device_and_memory(model: torch.nn.Module) -> None:
     if torch.cuda.is_available():
         print("torch.cuda.memory_allocated():", torch.cuda.memory_allocated())
         print("torch.cuda.memory_reserved():", torch.cuda.memory_reserved())
+
+
+def print_parameter_counts(model: torch.nn.Module) -> None:
+    trainable = sum(parameter.numel() for parameter in model.parameters() if parameter.requires_grad)
+    frozen = sum(parameter.numel() for parameter in model.parameters() if not parameter.requires_grad)
+    total = trainable + frozen
+    print("Trainable parameters:", trainable)
+    print("Frozen parameters:", frozen)
+    print("Total parameters:", total)
 
 
 def print_epoch_gpu_memory(epoch: int) -> None:
