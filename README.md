@@ -41,6 +41,7 @@ notebooks/05_weighted_logit_fusion.ipynb
 notebooks/06_learnable_loss_weights.ipynb
 notebooks/07_submission_generation.ipynb
 notebooks/08_final_analysis.ipynb
+notebooks/09_run_all_research_pipeline.ipynb
 kaggle_run.ipynb
 ```
 
@@ -128,6 +129,7 @@ The research notebooks are reproducible runners only. They call scripts and keep
 | `06_learnable_loss_weights.ipynb` | CLS4 selected layers with learned loss weights |
 | `07_submission_generation.ipynb` | Selects best experiment and writes submissions |
 | `08_final_analysis.ipynb` | Collects CSVs and plots final analysis |
+| `09_run_all_research_pipeline.ipynb` | One master runner for notebooks 00-08 |
 
 ## Local Run
 
@@ -159,7 +161,9 @@ python scripts/generate_submissions.py --config configs/config.yaml --verbose
 
 ## Kaggle Run
 
-Use `kaggle_run.ipynb` and run all cells. It auto-detects Kaggle output paths and uses the included `MawqifV2` files. Equivalent commands:
+Use `notebooks/09_run_all_research_pipeline.ipynb` and run all cells if you want one notebook for the whole research pipeline. It auto-detects Kaggle output paths and uses the included `MawqifV2` files.
+
+You can also run the smaller notebooks `00` through `08` one at a time when you want manual control. Equivalent commands:
 
 ```bash
 pip install -q -r requirements.txt
