@@ -38,14 +38,16 @@ class PipelineLogger:
     @contextmanager
     def stage(self, name: str, status_name: str | None = None) -> Iterator[float]:
         self.current_step += 1
+        total = max(self.total_steps, self.current_step)
         label = status_name or name
-        print(f"[{self.current_step}/{self.total_steps}] {name}...")
+        print(f"[{self.current_step}/{total}] {name}...")
         started = time.perf_counter()
         try:
             yield started
         except Exception as exc:
             elapsed = time.perf_counter() - started
-            print(f"[{self.current_step}/{self.total_steps}] {name}: FAIL ({elapsed:.2f}s)")
+            total = max(self.total_steps, self.current_step)
+            print(f"[{self.current_step}/{total}] {name}: FAIL ({elapsed:.2f}s)")
             print(f"Stage failed: {name}")
             print(f"Error: {type(exc).__name__}: {exc}")
             if self.verbose:
@@ -54,7 +56,8 @@ class PipelineLogger:
             raise
         else:
             elapsed = time.perf_counter() - started
-            print(f"[{self.current_step}/{self.total_steps}] {name}: SUCCESS ({elapsed:.2f}s)")
+            total = max(self.total_steps, self.current_step)
+            print(f"[{self.current_step}/{total}] {name}: SUCCESS ({elapsed:.2f}s)")
             self.status.mark(label, True)
 
 
@@ -116,4 +119,3 @@ def print_epoch_gpu_memory(epoch: int) -> None:
             f"Epoch {epoch} GPU memory | "
             f"allocated={torch.cuda.memory_allocated()} reserved={torch.cuda.memory_reserved()}"
         )
-

@@ -69,17 +69,23 @@ $env:STANCEEVAL_OUTPUT_DIR="outputs"
 $env:STANCEEVAL_RESULTS_DIR="results"
 ```
 
-## Selected Model
+## Compared Models
 
-The configured run uses the recommended baseline model directly:
+The configured workflow compares these base models with the same setup:
 
 | Display name | Hugging Face ID |
 | --- | --- |
-| AraBERT-v2 Twitter | `aubmindlab/bert-base-arabertv02-twitter` |
+| MARBERT | `UBC-NLP/MARBERT` |
+| MARBERTv2 | `UBC-NLP/MARBERTv2` |
+| ARBERT | `UBC-NLP/ARBERT` |
+| AraBERT | `aubmindlab/bert-base-arabert` |
+| AraBERTv2 | `aubmindlab/bert-base-arabertv2` |
+| AraBERTv0.2 | `aubmindlab/bert-base-arabertv02` |
+| AraBERTv0.2 Twitter | `aubmindlab/bert-base-arabertv02-twitter` |
 
 ## Experiments
 
-The default workflow skips base model comparison and trains only:
+The default workflow runs a fair base-model comparison:
 
 - `base_final_cls_full_ft`: `AutoModelForSequenceClassification`, final-layer CLS, full fine-tuning.
 
@@ -95,7 +101,7 @@ early_stopping:
   patience: 3
 ```
 
-The best checkpoint is selected only by dev `Favg2`.
+The best checkpoint is selected only by dev `Favg2` and copied to `outputs/best_model/`.
 
 ## Local Run
 
@@ -115,7 +121,7 @@ Run the full workflow:
 
 ```bash
 python scripts/smoke_test.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
-python scripts/run_cls4_experiments.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
+python scripts/compare_base_models.py --config configs/config.yaml --verbose
 python scripts/generate_submissions.py --config configs/config.yaml --verbose
 ```
 
@@ -129,16 +135,16 @@ export STANCEEVAL_DATA_DIR=/kaggle/working
 export STANCEEVAL_OUTPUT_DIR=/kaggle/working/outputs
 export STANCEEVAL_RESULTS_DIR=/kaggle/working/results
 python scripts/smoke_test.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
-python scripts/run_cls4_experiments.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
+python scripts/compare_base_models.py --config configs/config.yaml --verbose
 python scripts/generate_submissions.py --config configs/config.yaml --verbose
 ```
 
 ## Outputs
 
-Experiment result:
+Base model comparison result:
 
 ```text
-results/experiment_comparison.csv
+results/base_model_comparison.csv
 ```
 
 Best final checkpoint:

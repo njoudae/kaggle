@@ -92,20 +92,22 @@ def main() -> None:
             winner = comparison.iloc[0]
             if not args.dry_run:
                 best_base_dir = Path(config["paths"]["output_dir"]) / "best_base_model"
+                final_best_dir = Path(config["paths"]["best_model_dir"])
                 copy_tree(winner["checkpoint_path"], best_base_dir)
+                copy_tree(winner["checkpoint_path"], final_best_dir)
 
                 for _, row in comparison.iloc[1:].iterrows():
                     checkpoint = Path(str(row["checkpoint_path"]))
                     remove_dir(checkpoint)
                     comparison.loc[comparison["experiment_name"] == row["experiment_name"], "checkpoint_path"] = ""
 
-                comparison.loc[0, "checkpoint_path"] = str(best_base_dir)
+                comparison.loc[0, "checkpoint_path"] = str(final_best_dir)
             comparison.to_csv(results_dir / "base_model_comparison.csv", index=False)
 
         with logger.stage("Printing final summary", "Validation"):
             print(comparison.to_string(index=False))
             print(f"Best base model: {winner['model_name']} ({winner['hf_id']})")
-            print(f"Best base checkpoint: {winner['checkpoint_path']}")
+            print(f"Best base checkpoint: {comparison.iloc[0]['checkpoint_path']}")
     finally:
         logger.status.print_summary()
 

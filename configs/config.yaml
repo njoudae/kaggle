@@ -27,6 +27,24 @@ labels:
 model_selection_metric: dev_Favg2
 
 models:
+  - name: MARBERT
+    hf_id: UBC-NLP/MARBERT
+    enabled: true
+  - name: MARBERTv2
+    hf_id: UBC-NLP/MARBERTv2
+    enabled: true
+  - name: ARBERT
+    hf_id: UBC-NLP/ARBERT
+    enabled: true
+  - name: AraBERT
+    hf_id: aubmindlab/bert-base-arabert
+    enabled: true
+  - name: AraBERTv2
+    hf_id: aubmindlab/bert-base-arabertv2
+    enabled: true
+  - name: AraBERTv02
+    hf_id: aubmindlab/bert-base-arabertv02
+    enabled: true
   - name: AraBERTv02_Twitter
     hf_id: aubmindlab/bert-base-arabertv02-twitter
     enabled: true
