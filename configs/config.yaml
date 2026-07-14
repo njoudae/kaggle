@@ -7,6 +7,8 @@ paths:
   best_model_dir: ${STANCEEVAL_BEST_MODEL_DIR:-outputs/best_model}
   train_file: MawqifV2/Track 1/train.csv
   dev_file: MawqifV2/Track 1/dev.csv
+  fallback_train_file: MawqifV2/Track 1/train.csv
+  fallback_dev_file: MawqifV2/Track 1/dev.csv
   test_seen_file: test_seen.csv
   test_unseen_file: test_unseen.csv
   fallback_test_seen_file: MawqifV2/Track 1/dev.csv
@@ -27,31 +29,22 @@ labels:
 model_selection_metric: dev_Favg2
 
 models:
-  - name: MARBERT
-    hf_id: UBC-NLP/MARBERT
-    enabled: true
   - name: MARBERTv2
     hf_id: UBC-NLP/MARBERTv2
     enabled: true
-  - name: ARBERT
-    hf_id: UBC-NLP/ARBERT
-    enabled: true
-  - name: AraBERT
-    hf_id: aubmindlab/bert-base-arabert
-    enabled: true
-  - name: AraBERTv2
-    hf_id: aubmindlab/bert-base-arabertv2
-    enabled: true
-  - name: AraBERTv02
-    hf_id: aubmindlab/bert-base-arabertv02
+  - name: MARBERT
+    hf_id: UBC-NLP/MARBERT
     enabled: true
   - name: AraBERTv02_Twitter
     hf_id: aubmindlab/bert-base-arabertv02-twitter
     enabled: true
+  - name: ARBERT
+    hf_id: UBC-NLP/ARBERT
+    enabled: true
 
 training:
   max_length: 128
-  batch_size: 32
+  batch_size: 16
   eval_batch_size: 32
   epochs: 20
   learning_rate: 0.00002
@@ -62,9 +55,8 @@ training:
   num_workers: 2
   pin_memory: true
   mixed_precision: auto
-  require_gpu: true
   early_stopping:
-    enabled: true
+    enabled: false
     patience: 3
   save_best_only: true
   resume_from_checkpoint: false
@@ -77,26 +69,26 @@ experiments:
     architecture: sequence_classification
     freeze_encoder: false
   cls4_equal_loss_full_ft:
-    enabled: false
+    enabled: true
     architecture: cls4
     fusion: equal_logits
     loss_mode: equal_mean
     freeze_encoder: false
   cls4_equal_loss_frozen:
-    enabled: false
+    enabled: true
     architecture: cls4
     fusion: equal_logits
     loss_mode: equal_mean
     freeze_encoder: true
   cls4_weighted_logits_full_ft:
-    enabled: false
+    enabled: true
     architecture: cls4
     fusion: weighted_logits
     loss_mode: heads_plus_fused
     lambda_fused: 1.0
     freeze_encoder: false
   cls4_weighted_logits_frozen:
-    enabled: false
+    enabled: true
     architecture: cls4
     fusion: weighted_logits
     loss_mode: heads_plus_fused

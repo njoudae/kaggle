@@ -13,7 +13,7 @@ from src.data import columns_from_config, labels_from_config, load_labeled_dataf
 from src.pipeline_logging import PipelineLogger
 from src.trainer import train_experiment
 from src.utils import copy_tree, ensure_dir, get_device, json_dump, remove_dir, set_seed
-from src.validation import ensure_output_dirs, require_config, require_files, validate_labeled_dataset, validate_unlabeled_file
+from src.validation import ensure_output_dirs, require_config, require_files, resolve_existing_path, validate_labeled_dataset, validate_unlabeled_file
 
 
 def parse_args() -> argparse.Namespace:
@@ -56,8 +56,18 @@ def main() -> None:
 
         with logger.stage("Validating paths", "Dataset"):
             data_dir = Path(config["paths"]["data_dir"])
-            train_path = data_dir / config["paths"]["train_file"]
-            dev_path = data_dir / config["paths"]["dev_file"]
+            train_path = resolve_existing_path(
+                data_dir,
+                config["paths"]["train_file"],
+                config["paths"].get("fallback_train_file", "MawqifV2/Track 1/train.csv"),
+                "train",
+            )
+            dev_path = resolve_existing_path(
+                data_dir,
+                config["paths"]["dev_file"],
+                config["paths"].get("fallback_dev_file", "MawqifV2/Track 1/dev.csv"),
+                "dev",
+            )
             test_seen = data_dir / config["paths"].get("test_seen_file", "")
             test_unseen = data_dir / config["paths"].get("test_unseen_file", "")
             fallback_seen = data_dir / config["paths"].get("fallback_test_seen_file", "")

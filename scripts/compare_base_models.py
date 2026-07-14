@@ -13,7 +13,7 @@ from src.data import columns_from_config, labels_from_config, load_labeled_dataf
 from src.pipeline_logging import PipelineLogger
 from src.trainer import train_experiment
 from src.utils import copy_tree, ensure_dir, get_device, remove_dir, set_seed
-from src.validation import ensure_output_dirs, require_config, require_files, validate_labeled_dataset
+from src.validation import ensure_output_dirs, require_config, require_files, resolve_existing_path, validate_labeled_dataset
 
 
 def parse_args() -> argparse.Namespace:
@@ -37,8 +37,18 @@ def main() -> None:
             data_dir = Path(config["paths"]["data_dir"])
 
         with logger.stage("Validating paths", "Dataset"):
-            train_path = data_dir / config["paths"]["train_file"]
-            dev_path = data_dir / config["paths"]["dev_file"]
+            train_path = resolve_existing_path(
+                data_dir,
+                config["paths"]["train_file"],
+                config["paths"].get("fallback_train_file", "MawqifV2/Track 1/train.csv"),
+                "train",
+            )
+            dev_path = resolve_existing_path(
+                data_dir,
+                config["paths"]["dev_file"],
+                config["paths"].get("fallback_dev_file", "MawqifV2/Track 1/dev.csv"),
+                "dev",
+            )
             require_files([train_path, dev_path])
             output_dir = ensure_dir(Path(config["paths"]["output_dir"]) / "base_models")
             results_dir = ensure_dir(config["paths"]["results_dir"])

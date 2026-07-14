@@ -20,6 +20,7 @@ from src.validation import (
     ensure_output_dirs,
     require_config,
     require_files,
+    resolve_existing_path,
     validate_labeled_dataset,
 )
 
@@ -58,7 +59,12 @@ def main() -> None:
 
         with logger.stage("Validating files and folders", "Config"):
             data_dir = Path(config["paths"]["data_dir"])
-            train_path = data_dir / config["paths"]["train_file"]
+            train_path = resolve_existing_path(
+                data_dir,
+                config["paths"]["train_file"],
+                config["paths"].get("fallback_train_file", "MawqifV2/Track 1/train.csv"),
+                "train",
+            )
             require_files([train_path])
             smoke_dir = ensure_dir(Path(config["paths"]["output_dir"]) / "smoke_test")
             ensure_output_dirs([smoke_dir])

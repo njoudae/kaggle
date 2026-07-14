@@ -23,6 +23,28 @@ def require_files(paths: list[str | Path]) -> None:
         raise FileNotFoundError(f"Missing required file(s): {missing}")
 
 
+def resolve_existing_path(
+    data_dir: str | Path,
+    preferred: str | Path,
+    fallback: str | Path | None = None,
+    label: str = "file",
+) -> Path:
+    data_root = Path(data_dir)
+    preferred_path = data_root / preferred
+    if preferred_path.exists():
+        return preferred_path
+    if fallback:
+        fallback_path = data_root / fallback
+        if fallback_path.exists():
+            print(f"Configured {label} file not found: {preferred_path}")
+            print(f"Using fallback {label} file: {fallback_path}")
+            return fallback_path
+    raise FileNotFoundError(
+        f"Missing {label} file. Tried {preferred_path}"
+        + (f" and fallback {data_root / fallback}" if fallback else "")
+    )
+
+
 def ensure_output_dirs(paths: list[str | Path]) -> None:
     for path in paths:
         ensure_dir(path)
@@ -69,4 +91,3 @@ def describe_model_cache(model_id: str) -> None:
         print("Model found in cache.")
     else:
         print("Downloading pretrained model...")
-
