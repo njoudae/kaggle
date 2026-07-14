@@ -44,6 +44,7 @@ training:
   num_workers: 2
   pin_memory: true
   mixed_precision: auto
+  require_gpu: true
   early_stopping:
     enabled: true
     patience: 3

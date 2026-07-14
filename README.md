@@ -108,14 +108,15 @@ pip install -r requirements.txt
 Run a lightweight check:
 
 ```bash
-python scripts/smoke_test.py --config configs/config.yaml
+python scripts/smoke_test.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
 ```
 
 Run the full workflow:
 
 ```bash
-python scripts/run_cls4_experiments.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter
-python scripts/generate_submissions.py --config configs/config.yaml
+python scripts/smoke_test.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
+python scripts/run_cls4_experiments.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
+python scripts/generate_submissions.py --config configs/config.yaml --verbose
 ```
 
 ## Kaggle Run
@@ -127,8 +128,9 @@ pip install -q -r requirements.txt
 export STANCEEVAL_DATA_DIR=/kaggle/working
 export STANCEEVAL_OUTPUT_DIR=/kaggle/working/outputs
 export STANCEEVAL_RESULTS_DIR=/kaggle/working/results
-python scripts/run_cls4_experiments.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter
-python scripts/generate_submissions.py --config configs/config.yaml
+python scripts/smoke_test.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
+python scripts/run_cls4_experiments.py --config configs/config.yaml --base-model-id aubmindlab/bert-base-arabertv02-twitter --verbose
+python scripts/generate_submissions.py --config configs/config.yaml --verbose
 ```
 
 ## Outputs

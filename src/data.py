@@ -8,6 +8,7 @@ from typing import Any
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
+from tqdm.auto import tqdm
 
 from .preprocessing import preprocess_text
 
@@ -92,8 +93,10 @@ def load_labeled_dataframe(
             "they are kept as empty strings."
         )
 
-    work[columns.text_col] = work[columns.text_col].map(preprocess_text)
-    work[columns.target_col] = work[columns.target_col].map(preprocess_text)
+    tqdm.pandas(desc=f"Preprocessing text: {Path(path).name}")
+    work[columns.text_col] = work[columns.text_col].progress_map(preprocess_text)
+    tqdm.pandas(desc=f"Preprocessing target: {Path(path).name}")
+    work[columns.target_col] = work[columns.target_col].progress_map(preprocess_text)
     work["label"] = work[columns.label_col].map(label2id).astype(int)
 
     if max_samples:
@@ -127,8 +130,10 @@ def load_unlabeled_dataframe(
             "test rows are preserved and empty values become empty strings."
         )
 
-    work[columns.text_col] = work[columns.text_col].map(preprocess_text)
-    work[columns.target_col] = work[columns.target_col].map(preprocess_text)
+    tqdm.pandas(desc=f"Preprocessing text: {Path(path).name}")
+    work[columns.text_col] = work[columns.text_col].progress_map(preprocess_text)
+    tqdm.pandas(desc=f"Preprocessing target: {Path(path).name}")
+    work[columns.target_col] = work[columns.target_col].progress_map(preprocess_text)
     if max_samples:
         work = work.head(int(max_samples)).copy()
     return work.reset_index(drop=True)
